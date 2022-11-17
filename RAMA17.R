@@ -1,22 +1,38 @@
-# setwd("~/Repositorios/PF Mineria22")
+setwd("~/Repositorios/PF Mineria22")
 library(readxl)
 library(dplyr)
-PMCO.df <- read_excel("Repositorios/PF Mineria22/assets/2017PMCO.xls")
-summary(PMCO.df)
+library(skimr)
+PMCO.df <- read_excel("assets/2017PMCO.xls")
+skim(PMCO.df)
 print(PMCO.df)
 
-del_nulls <- function(df){
-  if (length(unique(df)) == 1) {
-    print("xd")
-  }
+## see if omiting is viable ##
+temp.df <- PMCO.df
+temp.df <- temp.df %>% select_if(~length(unique(.))!=1)
+temp.df[temp.df == -99] <- NA
+temp.df %>% na.omit
+# when removing NaN, only 136 observations, limiting the df too much the set, 
+# so the method of imputing with the mean will be used
+
+source("preprocesing.R")
+PMCO.red <- clean_data(PMCO.df, -99)
+skim(PMCO.red)
+print(PMCO.red)
+
+
+######## exploratory analysis ###########
+library(ggplot2)
+library(reshape)
+library(tidyr)
+
+box_p <- PMCO.red[,-c(1,2)] %>%  gather(cols, value) %>%  
+  ggplot(aes(x = value)) + geom_boxplot(color="red") + facet_wrap(~cols, scale="free")
+library(glue)
+for (i in 1:ncol(PMCO.red[,-c(1,2)])) {
+  stats <- boxplot.stats(PMCO.red[,i])
+  #print(glue("For {colnames(PMCO.red)[3]} there are {length(stats$out)} outliers"))
 }
-# select only non NULL columns
-PMCO.red <- PMCO.df %>% select_if(~length(unique(.))!=1)
-# remove NaN == -99 with mean
-replaceNANmean <- function(x) replace(x, x==-99, mean(x, na.rm = TRUE))
-
-PMCO.red[] <- lapply(PMCO.red, replaceNANmean)
-summary(PMCO.red)
-
-# agrupar esto y volverlo función para aplicarlo a cada df
-hist(PMCO.red[,"CAM"])
+boxplot.stats(PMCO.red$AJM)
+print(stats)
+print(box_p)
+length(stats$out)
