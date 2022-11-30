@@ -12,6 +12,7 @@ source("preprocesing.R")
 NO2.red <- NO2.df[,-c(1,2)]
 NO2.red <- preprocess(NO2.red)
 skim(NO2.red)
+summary(NO2.red)
 
 # correlation analysis
 library(corrplot)

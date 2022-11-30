@@ -27,6 +27,7 @@ hist.data.frame(NO.red[,-c(1,2)]) # no
 ## scale
 NO.scaled <- as_tibble(scale(NO.red))
 NO.scaled
+skim(NO.scaled)
 summary(NO.scaled)
 
 #### cluster tendency ####
@@ -78,14 +79,14 @@ cluster_optimal[[3]] # k->2
 ############################ TARDA ############################
 #library(parallelMap)
 
-#cluster_30_indexes <- NbClust(data = NO.scaled, distance = "euclidean", min.nc = 2, max.nc =
+#cluster_30_indexes <- NbClust(data = NO.scaled, distance = "manhattan", min.nc = 2, max.nc =
 #                                9, method = "complete", index ="all")
 
 #fviz_nbclust(cluster_30_indexes, clara) +
 #  theme_minimal() +
 #  labs(title = "Frequency of Optimal Clusters using 30 indexes in NbClust Package")
 
-clust_final <- clara(NO.scaled, k = 2, pamLike = TRUE)
+clust_final <- clara(NO.scaled, k = 2, pamLike = TRUE, metric="manhattan")
 print(clust_final)
 dd <- cbind(NO.red, cluster = clust_final$cluster)
 head(dd)

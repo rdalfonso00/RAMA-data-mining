@@ -128,3 +128,7 @@ mean(m)
 m <-sapply(dd[dd["cluster"] == 2,-ncol(dd)], mean)
 print(m)
 mean(m)
+
+# max
+data.frame(lapply(dd[,-ncol(dd)], max))
+
