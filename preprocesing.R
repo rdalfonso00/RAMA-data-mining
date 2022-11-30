@@ -13,7 +13,7 @@ clean_data <- function(df, nanVal){
   # remove NaN == -99 with mean
   clean.df[clean.df == nanVal] <- NA
   # remove colums with less than 5% efective data
-  clean.df <- select_if(clean.df, !( colSums(is.na(clean.df)) > nrow(clean.df)*(1-0.2)) )
+  #clean.df <- select_if(clean.df, !( colSums(is.na(clean.df)) > nrow(clean.df)*(1-0.2)) )
   replaceNANmean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
   
   clean.df[] <- lapply(clean.df, replaceNANmean)

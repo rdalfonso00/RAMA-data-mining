@@ -2,33 +2,33 @@ setwd("~/Repositorios/PF Mineria22")
 library(readxl)
 library(dplyr)
 library(skimr)
-NOX.df <- read_excel("assets/2017NOX.xls")
+PM25.df <- read_excel("assets/2017PM25.xls")
 # make Fecha of type Date
-NOX.df$FECHA <- as.Date(NOX.df$FECHA)
-skim(NOX.df)
-summary(NOX.df)
+PM25.df$FECHA <- as.Date(PM25.df$FECHA)
+skim(PM25.df)
+summary(PM25.df)
 
 #### preprocessing ####
 source("preprocesing.R")
-NOX.red <- preprocess(NOX.df)
-skim(NOX.red)
-summary(NOX.red)
-
-# correlation analysis
+PM25.red <- preprocess(PM25.df)
+skim(PM25.red)
+summary(PM25.red)
+#PED, SJA, UIZ out
+# Correlation analysis
 library(corrplot)
-M <- cor(NOX.red[,-c(1,2)])
+M <- cor(PM25.red[,-c(1,2)])
 corrplot(M, type = "upper", order = "hclust", addCoef.col = "black", number.font=0.8, number.cex = 0.8)
 options(digits=3)
 print(M)
 # no high corr vars
 
 library(Hmisc)
-hist(NOX.red[,-c(1,2)]) # no
+hist(PM25.red[,-c(1,2)]) 
 #
 ## scale
-NOX.scaled <- as_tibble(scale(NOX.red[,-c(1,2)]))
-NOX.scaled
-summary(NOX.scaled)
+PM25.scaled <- as_tibble(scale(PM25.red[,-c(1,2)]))
+PM25.scaled
+summary(PM25.scaled)
 
 #### cluster tendency ####
 
@@ -36,20 +36,20 @@ summary(NOX.scaled)
 library(clustertend)
 # Compute Hopkins statistic 
 #####-_-####
-#hopkins::hopkins(NOX.scaled)
+#hopkins::hopkins(PM25.scaled)
 set.seed(123)
-clustertend::hopkins(NOX.scaled, n=700)
+clustertend::hopkins(PM25.scaled, n=700)
 
 #### clustering ####
 source("clust_func.R")
-cluster_possibles <- map (1:9, ~clust_flex(.x, df.scaled = NOX.scaled))
+cluster_possibles <- map (1:9, ~clust_flex(.x, df.scaled = PM25.scaled))
 
 library(patchwork) # allows for plotting in grid ggplot's with '+'
 cluster_possibles[[1]] + cluster_possibles[[2]] + cluster_possibles[[3]] +
   cluster_possibles[[4]] + cluster_possibles[[5]] + cluster_possibles[[6]] +
   cluster_possibles[[7]] + cluster_possibles[[8]] + cluster_possibles[[9]] +
   plot_annotation (
-    title = "CLARA Clustering of NOX across potential number of clusters \U0022k\U0022 ",
+    title = "CLARA Clustering of PM2.5 across potential number of clusters \U0022k\U0022 ",
     caption = "Visualization: FCC BUAP | Data: RAMA - Red Automática de Monitoreo Atmosférico",
     theme = theme (
       plot.title = element_text(hjust = 0.5, vjust = 0.5, size = 14, face = "bold", margin = margin
@@ -60,37 +60,36 @@ cluster_possibles[[1]] + cluster_possibles[[2]] + cluster_possibles[[3]] +
 
 # TARDA ###
 methodologies <- c("wss", "silhouette", "gap_stat")
-diss = dist(NOX.scaled, method = "manhattan")
-cluster_optimal <- map (methodologies, ~fviz_nbclust (NOX.scaled, FUNcluster = clara, diss = diss,method = .x, k.max=4))
+diss = dist(PM25.scaled, method = "manhattan")
+cluster_optimal <- map (methodologies, ~fviz_nbclust (PM25.scaled, FUNcluster = clara, 
+                                                      diss = diss, method = .x, k.max=6))
 # elbow
-cluster_optimal[[1]] # k-> 2 
+cluster_optimal[[1]] # k-> 2
 # silhouette
 cluster_optimal[[2]] # k-> 2
 # gap statistic
-cluster_optimal[[3]] # k-> 4 (2 is still good)
+cluster_optimal[[3]] # k-> 5
 cluster_optimal[[3]]$data
-#gap(2) -> 1.0907
-#gap(4) -< 1.1232. diff=0.0325. Therefore 2 is still good
 
-# main metrics suggest k=2 
-# k=2 will be used
-# No need for more analysis
+# main metrics  mixed
+
+# need more analysis
 
 #### 30 indices ####
-#library (NbClust)
+library (NbClust)
 ############################ TARDA ############################
-#library(parallelMap)
 
-#cluster_30_indexes <- NbClust(data = NOX.scaled, distance = "manhattan", min.nc = 2, max.nc =
-#                                9, method = "complete", index ="all")
+cluster_30_indexes <- NbClust(data = PM25.scaled, distance = "manhattan", min.nc = 2, max.nc =
+                                5, method = "complete", index ="all")
 
-#fviz_nbclust(cluster_30_indexes, clara) +
-#  theme_minimal() +
-#  labs(title = "Frequency of Optimal Clusters using 30 indexes in NbClust Package")
+fviz_nbclust(cluster_30_indexes, clara) +
+  theme_minimal() +
+  labs(title = "Frequency of Optimal Clusters using 30 indexes in NbClust Package")
+# k=2 selected
 
-clust_final <- clara(NOX.scaled, k = 2, metric="manhattan", pamLike = T)
+clust_final <- clara(PM25.scaled, k = 2, metric="manhattan", pamLike = T)
 print(clust_final)
-dd2 <- cbind(NOX.red, cluster = clust_final$cluster)
+dd2 <- cbind(PM25.red, cluster = clust_final$cluster)
 head(dd2)
 fviz_cluster(clust_final,
              palette = "Dark2", # color palette
